@@ -1,2 +1,32 @@
-Gestiunea Magazinului "Paris" 
-Proiectul propune realizarea unei aplicații de gestiune pentru un magazin, axată pe administrarea eficientă a unui catalog de produse și a stocurilor aferente. În această etapă inițială, aplicația se va concentra pe operațiile fundamentale de manipulare a datelor, permițând utilizatorului să definească produse prin atribute esențiale precum nume, cod unic, preț și cantitate disponibilă. Funcționalitatea principală va permite vizualizarea întregului inventar într-un format organizat, alături de posibilitatea de a adăuga articole noi sau de a actualiza stocul existent atunci când are loc o aprovizionare. De asemenea, sistemul va include o logică simplă de căutare pentru a identifica rapid un produs după codul său și o funcție de eliminare a reperelor care nu mai sunt necesare. Pentru a simula activitatea comercială de bază, voi implementa un modul de vânzare care verifică disponibilitatea produsului în stoc, scade cantitatea vândută și afișează valoarea totală de plată. Această abordare pune accent pe integritatea datelor și pe fluxul logic al informației, oferind o bază stabilă pe care, ulterior, se pot grefa module avansate precum gestionarea categoriilor, conturi de utilizatori cu drepturi diferite sau generarea de rapoarte grafice complexe.
+# 🥖 Proiect: Gestiunea Magazinului "Paris"
+
+## 📝 Descriere Generală
+Acest proiect vizează realizarea unei aplicații de gestiune axată pe administrarea eficientă a **catalogului de produse** și a **stocurilor**. Obiectivul principal este manipularea sigură a datelor și asigurarea unui flux logic pentru activitățile comerciale de bază.
+
+---
+
+## 🚀 Funcționalități Principale
+
+### 1. Administrare Inventar
+*   **Definire Produse:** Atribute esențiale precum *nume*, *cod unic*, *preț* și *cantitate*.
+*   **Vizualizare:** Afișarea întregului inventar într-un format organizat.
+*   **Actualizare:** Adăugarea de articole noi și modificarea stocului la aprovizionare.
+*   **Mentenanță:** Eliminarea reperelor care nu mai sunt necesare.
+
+### 2. Operațiuni și Logistică
+*   **Căutare Rapidă:** Identificarea instantanee a produselor după **codul unic**.
+*   **Modul de Vânzare:** 
+    *   Verifică disponibilitatea în stoc.
+    *   Scade automat cantitatea vândută.
+    *   Calculează și afișează valoarea totală de plată.
+
+---
+
+## 🛠️ Arhitectură și Viitor
+Aplicația pune accent pe **integritatea datelor** și oferă o bază stabilă pentru extinderi ulterioare:
+- [ ] Gestionarea categoriilor de produse.
+- [ ] Conturi de utilizatori cu drepturi diferențiate (Admin/Vânzător).
+- [ ] Generarea de rapoarte grafice complexe.
+
+---
+> **Notă:** Această etapă reprezintă fundația sistemului de gestiune "Paris".
