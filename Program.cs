@@ -1,36 +1,38 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Tema01
+namespace MagazinParis
 {
-    public class Firma
+    class Program
     {
-       
-
-        static void Main(string[] args)
+        static void Main()
         {
-            int ore=100;
-            double tarif_ore=10.50;
-            Console.WriteLine("Citim numarul de ore:");
-            ore=Convert.ToInt32(Console.ReadLine());
-            Console.WriteLine("Citim tariful pentru ora:");
-            tarif_ore = Convert.ToDouble(Console.ReadLine());
+            Console.WriteLine("BUN VENIT LA MAGAZINUL PARIS\n");
 
+            Produs produs1 = new Produs("P01", "Suc de mere", 4.50, 50);
+            Produs produs2 = new Produs("P02", "Pringles", 11.00, 30);
 
-            var salariu = ore * tarif_ore;
-            Console.WriteLine(salariu);
-            if(salariu>3000)
-            {
-                Console.WriteLine("Salariu este mare!");
-            }else
-            {
-                Console.WriteLine("Ați lucrat prea puține ore pentru a avea un salariumare!");
-            }
+            Client client1 = new Client("Andrei", 50.00);
+            Client client2 = new Client("Maria", 10.00);
+
+            Console.WriteLine("STARE INITIALA");
+            produs1.AfisareInfo();
+            produs2.AfisareInfo();
+            client1.AfisareInfo();
+            client2.AfisareInfo();
+
+            client1.Cumpara(produs1, 5);
+
+            client2.Cumpara(produs2, 3);
+
+            client1.Cumpara(produs2, 100);
+
+            Console.WriteLine("\nSTARE DUPA TRANZACTII");
+            produs1.AfisareInfo();
+            produs2.AfisareInfo();
+            client1.AfisareInfo();
+            client2.AfisareInfo();
+
             Console.ReadKey();
         }
-   
     }
 }
