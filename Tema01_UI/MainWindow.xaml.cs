@@ -1,160 +1,529 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
+using System.Windows.Data;
 
 namespace MagazinParis
 {
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        private AdministrareProduse_FisierText adminProduse;
-        private Inventar inventar;
-        public ObservableCollection<Produs> ProduseAfisate { get; set; }
+        private ObservableCollection<Produs> _produse;
+        private ObservableCollection<Client> _clienti;
+        private Produs _produsForm;
+        private Client _clientForm;
+        private Produs _produsSelectat;
+        private Client _clientSelectat;
+        private string _textCautareProdus;
+        private string _textCautareClient;
 
-        public MainWindow()
+        private const string NumeFisierProduse = "Produse.txt";
+        private const string NumeFisierClienti = "Clienti.txt";
+
+        public ObservableCollection<Produs> Produse
         {
-            InitializeComponent();
-
-            adminProduse = new AdministrareProduse_FisierText("Produse.txt");
-            inventar = new Inventar(100);
-            ProduseAfisate = new ObservableCollection<Produs>();
-
-            adminProduse.CitesteDinFisierInInventar(inventar);
-            IncarcaProduseInLista();
-
-            // Configurare controale Lab 9
-            lstCategorii.ItemsSource = Enum.GetValues(typeof(CategorieProdus));
-            cmbSelectieProdus.ItemsSource = ProduseAfisate;
-            dgProduse.ItemsSource = ProduseAfisate;
-            dpDataAdaugarii.SelectedDate = DateTime.Now;
-        }
-
-        private void IncarcaProduseInLista()
-        {
-            ProduseAfisate.Clear();
-            for (int i = 0; i < inventar.numarProduse; i++)
+            get { return _produse; }
+            set
             {
-                ProduseAfisate.Add(inventar.produse[i]);
+                _produse = value;
+                OnPropertyChanged();
+                ActualizeazaStatisticiProduse();
             }
         }
 
-        private void btnAdauga_Click(object sender, RoutedEventArgs e)
+        public ObservableCollection<Client> Clienti
         {
-            try
+            get { return _clienti; }
+            set
             {
-                Produs p = PreiaDateDinFormular();
-                inventar.AdaugaProdus(p);
-                ProduseAfisate.Add(p);
-                ActualizeazaSelectie();
-                MessageBox.Show("Produs adăugat!");
-                CurataCampuri();
+                _clienti = value;
+                OnPropertyChanged();
+                ActualizeazaStatisticiClienti();
             }
-            catch (Exception ex) { MessageBox.Show("Eroare: " + ex.Message); }
         }
 
-        // Cerința 2: Operația de Modificare
-        private void btnModifica_Click(object sender, RoutedEventArgs e)
+        public Produs ProdusForm
         {
-            Produs selectat = cmbSelectieProdus.SelectedItem as Produs;
-            if (selectat == null)
+            get { return _produsForm; }
+            set
             {
-                MessageBox.Show("Te rog selectează un produs din listă pentru a-l modifica!");
-                return;
+                _produsForm = value;
+                OnPropertyChanged();
             }
-
-            try
-            {
-                // Actualizăm obiectul existent în inventar
-                selectat.CodUnic = txtCod.Text;
-                selectat.Nume = txtNume.Text;
-                selectat.Pret = double.Parse(txtPret.Text);
-                selectat.Cantitate = int.Parse(txtCantitate.Text);
-                selectat.DataAdaugarii = dpDataAdaugarii.SelectedDate ?? DateTime.Now;
-                
-                if (lstCategorii.SelectedItem != null)
-                    selectat.Categorie = (CategorieProdus)lstCategorii.SelectedItem;
-
-                // Caracteristici (Flags)
-                selectat.Caracteristici = CaracteristiciProdus.Niciuna;
-                foreach (CheckBox cb in pnlCaracteristici.Children.OfType<CheckBox>())
-                    if (cb.IsChecked == true)
-                        selectat.Caracteristici |= (CaracteristiciProdus)Enum.Parse(typeof(CaracteristiciProdus), cb.Tag.ToString());
-
-                // Forțăm reîmprospătarea UI (Cerința Lab 9)
-                dgProduse.Items.Refresh();
-                ActualizeazaSelectie();
-                
-                MessageBox.Show("Produsul a fost modificat cu succes!");
-            }
-            catch (Exception ex) { MessageBox.Show("Eroare la modificare: " + ex.Message); }
         }
 
-        private void cmbSelectieProdus_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        public Client ClientForm
         {
-            Produs selectat = cmbSelectieProdus.SelectedItem as Produs;
-            if (selectat != null)
+            get { return _clientForm; }
+            set
             {
-                txtCod.Text = selectat.CodUnic;
-                txtNume.Text = selectat.Nume;
-                txtPret.Text = selectat.Pret.ToString();
-                txtCantitate.Text = selectat.Cantitate.ToString();
-                dpDataAdaugarii.SelectedDate = selectat.DataAdaugarii;
-                lstCategorii.SelectedItem = selectat.Categorie;
+                _clientForm = value;
+                OnPropertyChanged();
+            }
+        }
 
-                // Resetare CheckBoxes
-                foreach (CheckBox cb in pnlCaracteristici.Children.OfType<CheckBox>())
+        public Produs ProdusSelectat
+        {
+            get { return _produsSelectat; }
+            set
+            {
+                _produsSelectat = value;
+                OnPropertyChanged();
+                if (_produsSelectat != null)
                 {
-                    CaracteristiciProdus val = (CaracteristiciProdus)Enum.Parse(typeof(CaracteristiciProdus), cb.Tag.ToString());
-                    cb.IsChecked = selectat.Caracteristici.HasFlag(val);
+                    ProdusForm = new Produs(
+                        _produsSelectat.CodUnic,
+                        _produsSelectat.Nume,
+                        _produsSelectat.Pret,
+                        _produsSelectat.Cantitate,
+                        _produsSelectat.Categorie,
+                        _produsSelectat.Caracteristici)
+                    {
+                        DataAdaugarii = _produsSelectat.DataAdaugarii
+                    };
+                    ActualizeazaCheckBoxuriCaracteristici();
                 }
             }
         }
 
-        private Produs PreiaDateDinFormular()
+        public Client ClientSelectat
         {
-            CategorieProdus cat = lstCategorii.SelectedItem != null ? (CategorieProdus)lstCategorii.SelectedItem : CategorieProdus.Necunoscut;
-            
-            CaracteristiciProdus car = CaracteristiciProdus.Niciuna;
+            get { return _clientSelectat; }
+            set
+            {
+                _clientSelectat = value;
+                OnPropertyChanged();
+                if (_clientSelectat != null)
+                {
+                    ClientForm = new Client(
+                        _clientSelectat.IdUnic,
+                        _clientSelectat.Nume,
+                        _clientSelectat.Email,
+                        _clientSelectat.Buget)
+                    {
+                        DataInregistrarii = _clientSelectat.DataInregistrarii
+                    };
+                }
+            }
+        }
+
+        public string TextCautareProdus
+        {
+            get { return _textCautareProdus; }
+            set
+            {
+                _textCautareProdus = value;
+                OnPropertyChanged();
+                FiltreazaProduse();
+            }
+        }
+
+        public string TextCautareClient
+        {
+            get { return _textCautareClient; }
+            set
+            {
+                _textCautareClient = value;
+                OnPropertyChanged();
+                FiltreazaClienti();
+            }
+        }
+
+        public Array CategoriiProduse => Enum.GetValues(typeof(CategorieProdus));
+
+        private int _totalProduse;
+        private double _valoareStoc;
+        private int _totalBucati;
+        private int _totalCategorii;
+        private int _totalClienti;
+        private double _bugetTotal;
+
+        public int TotalProduse
+        {
+            get { return _totalProduse; }
+            set { _totalProduse = value; OnPropertyChanged(); }
+        }
+
+        public double ValoareStoc
+        {
+            get { return _valoareStoc; }
+            set { _valoareStoc = value; OnPropertyChanged(); }
+        }
+
+        public int TotalBucati
+        {
+            get { return _totalBucati; }
+            set { _totalBucati = value; OnPropertyChanged(); }
+        }
+
+        public int TotalCategorii
+        {
+            get { return _totalCategorii; }
+            set { _totalCategorii = value; OnPropertyChanged(); }
+        }
+
+        public int TotalClienti
+        {
+            get { return _totalClienti; }
+            set { _totalClienti = value; OnPropertyChanged(); }
+        }
+
+        public double BugetTotal
+        {
+            get { return _bugetTotal; }
+            set { _bugetTotal = value; OnPropertyChanged(); }
+        }
+
+        private ICollectionView _produseView;
+        private ICollectionView _clientiView;
+
+        public ICollectionView ProduseView => _produseView;
+
+        public ICollectionView ClientiView => _clientiView;
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            DataContext = this;
+
+            Produse = new ObservableCollection<Produs>();
+            Clienti = new ObservableCollection<Client>();
+
+            Produse.CollectionChanged += Produse_CollectionChanged;
+            Clienti.CollectionChanged += Clienti_CollectionChanged;
+
+            IncarcaDate();
+
+            _produseView = CollectionViewSource.GetDefaultView(Produse);
+            _produseView.Filter = FiltrareProdus;
+
+            _clientiView = CollectionViewSource.GetDefaultView(Clienti);
+            _clientiView.Filter = FiltrareClient;
+
+            ProdusForm = new Produs();
+            ClientForm = new Client();
+
             foreach (CheckBox cb in pnlCaracteristici.Children.OfType<CheckBox>())
+            {
+                cb.Checked += Caracteristici_CheckedChanged;
+                cb.Unchecked += Caracteristici_CheckedChanged;
+            }
+
+            Closing += MainWindow_Closing;
+        }
+
+        private void Produse_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            ActualizeazaStatisticiProduse();
+        }
+
+        private void Clienti_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            ActualizeazaStatisticiClienti();
+        }
+
+        private void IncarcaDate()
+        {
+            if (File.Exists(NumeFisierProduse))
+            {
+                string[] linii = File.ReadAllLines(NumeFisierProduse);
+                foreach (string linie in linii)
+                {
+                    if (!string.IsNullOrWhiteSpace(linie))
+                    {
+                        Produse.Add(new Produs(linie));
+                    }
+                }
+            }
+
+            if (File.Exists(NumeFisierClienti))
+            {
+                string[] linii = File.ReadAllLines(NumeFisierClienti);
+                foreach (string linie in linii)
+                {
+                    if (!string.IsNullOrWhiteSpace(linie))
+                    {
+                        Clienti.Add(new Client(linie));
+                    }
+                }
+            }
+        }
+
+        private void SalveazaDate()
+        {
+            using (StreamWriter sw = new StreamWriter(NumeFisierProduse, false))
+            {
+                foreach (Produs p in Produse)
+                {
+                    sw.WriteLine(p.ConversieLaSir_PentruFisier());
+                }
+            }
+
+            using (StreamWriter sw = new StreamWriter(NumeFisierClienti, false))
+            {
+                foreach (Client c in Clienti)
+                {
+                    sw.WriteLine(c.ConversieLaSir_PentruFisier());
+                }
+            }
+        }
+
+        private void ActualizeazaStatisticiProduse()
+        {
+            TotalProduse = Produse.Count;
+            ValoareStoc = Produse.Sum(p => p.Pret * p.Cantitate);
+            TotalBucati = Produse.Sum(p => p.Cantitate);
+            TotalCategorii = Produse.Select(p => p.Categorie).Distinct().Count();
+        }
+
+        private void ActualizeazaStatisticiClienti()
+        {
+            TotalClienti = Clienti.Count;
+            BugetTotal = Clienti.Sum(c => c.Buget);
+        }
+
+        private bool FiltrareProdus(object obj)
+        {
+            if (string.IsNullOrWhiteSpace(TextCautareProdus))
+                return true;
+
+            Produs p = obj as Produs;
+            if (p == null)
+                return false;
+
+            return p.Nume.ToLower().Contains(TextCautareProdus.ToLower());
+        }
+
+        private bool FiltrareClient(object obj)
+        {
+            if (string.IsNullOrWhiteSpace(TextCautareClient))
+                return true;
+
+            Client c = obj as Client;
+            if (c == null)
+                return false;
+
+            return c.Nume.ToLower().Contains(TextCautareClient.ToLower());
+        }
+
+        private void FiltreazaProduse()
+        {
+            _produseView?.Refresh();
+        }
+
+        private void FiltreazaClienti()
+        {
+            _clientiView?.Refresh();
+        }
+
+        private void ActualizeazaCheckBoxuriCaracteristici()
+        {
+            if (ProdusForm == null) return;
+
+            foreach (CheckBox cb in pnlCaracteristici.Children.OfType<CheckBox>())
+            {
+                CaracteristiciProdus val = (CaracteristiciProdus)Enum.Parse(typeof(CaracteristiciProdus), cb.Tag.ToString());
+                cb.IsChecked = ProdusForm.Caracteristici.HasFlag(val);
+            }
+        }
+
+        private void Caracteristici_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            if (ProdusForm == null) return;
+
+            ProdusForm.Caracteristici = CaracteristiciProdus.Niciuna;
+            foreach (CheckBox cb in pnlCaracteristici.Children.OfType<CheckBox>())
+            {
                 if (cb.IsChecked == true)
-                    car |= (CaracteristiciProdus)Enum.Parse(typeof(CaracteristiciProdus), cb.Tag.ToString());
-
-            Produs p = new Produs(txtCod.Text, txtNume.Text, double.Parse(txtPret.Text), int.Parse(txtCantitate.Text), cat, car);
-            p.DataAdaugarii = dpDataAdaugarii.SelectedDate ?? DateTime.Now;
-            return p;
+                {
+                    CaracteristiciProdus val = (CaracteristiciProdus)Enum.Parse(typeof(CaracteristiciProdus), cb.Tag.ToString());
+                    ProdusForm.Caracteristici |= val;
+                }
+            }
         }
 
-        private void ActualizeazaSelectie()
+        private void AdaugaProdus_Click(object sender, RoutedEventArgs e)
         {
-            // Forțăm reîmprospătarea ComboBox-ului de selecție
-            var temp = cmbSelectieProdus.ItemsSource;
-            cmbSelectieProdus.ItemsSource = null;
-            cmbSelectieProdus.ItemsSource = temp;
+            if (string.IsNullOrWhiteSpace(ProdusForm.CodUnic) || string.IsNullOrWhiteSpace(ProdusForm.Nume) || ProdusForm.Pret <= 0)
+            {
+                MessageBox.Show("Completați corect toate câmpurile obligatorii!", "Eroare", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            if (Produse.Any(p => p.CodUnic == ProdusForm.CodUnic))
+            {
+                MessageBox.Show("Există deja un produs cu acest cod unic!", "Eroare", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            Produse.Add(new Produs(
+                ProdusForm.CodUnic,
+                ProdusForm.Nume,
+                ProdusForm.Pret,
+                ProdusForm.Cantitate,
+                ProdusForm.Categorie,
+                ProdusForm.Caracteristici)
+            {
+                DataAdaugarii = ProdusForm.DataAdaugarii
+            });
+
+            ActualizeazaStatisticiProduse();
+            ProdusForm = new Produs();
+            ActualizeazaCheckBoxuriCaracteristici();
         }
 
-        private void txtCautare_TextChanged(object sender, TextChangedEventArgs e)
+        private void ModificaProdus_Click(object sender, RoutedEventArgs e)
         {
-            string search = txtCautare.Text.ToLower();
-            dgProduse.ItemsSource = ProduseAfisate.Where(p => p.Nume.ToLower().Contains(search) || p.CodUnic.ToLower().Contains(search)).ToList();
+            if (ProdusSelectat == null)
+            {
+                MessageBox.Show("Selectați un produs pentru a-l modifica!", "Eroare", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            int index = Produse.IndexOf(ProdusSelectat);
+            if (index != -1)
+            {
+                Produse[index] = new Produs(
+                    ProdusForm.CodUnic,
+                    ProdusForm.Nume,
+                    ProdusForm.Pret,
+                    ProdusForm.Cantitate,
+                    ProdusForm.Categorie,
+                    ProdusForm.Caracteristici)
+                {
+                    DataAdaugarii = ProdusForm.DataAdaugarii
+                };
+                ActualizeazaStatisticiProduse();
+                MessageBox.Show("Produs modificat cu succes!", "Succes", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
 
-        private void btnSalveaza_Click(object sender, RoutedEventArgs e)
+        private void StergeProdus_Click(object sender, RoutedEventArgs e)
         {
-            adminProduse.SalveazaInventarInFisier(inventar);
-            MessageBox.Show("Date salvate!");
+            if (ProdusSelectat == null)
+            {
+                MessageBox.Show("Selectați un produs pentru a-l șterge!", "Eroare", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            MessageBoxResult result = MessageBox.Show(
+                $"Sigur doriți să ștergeți produsul '{ProdusSelectat.Nume}'?",
+                "Confirmare ștergere",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                Produse.Remove(ProdusSelectat);
+                ActualizeazaStatisticiProduse();
+                ProdusForm = new Produs();
+                ActualizeazaCheckBoxuriCaracteristici();
+            }
         }
 
-        private void btnIesire_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
-
-        private void CurataCampuri()
+        private void CurataCampuriProdus_Click(object sender, RoutedEventArgs e)
         {
-            txtCod.Clear(); txtNume.Clear(); txtPret.Clear(); txtCantitate.Clear();
-            dpDataAdaugarii.SelectedDate = DateTime.Now;
-            lstCategorii.SelectedIndex = -1;
-            foreach (CheckBox cb in pnlCaracteristici.Children.OfType<CheckBox>()) cb.IsChecked = false;
+            ProdusForm = new Produs();
+            ActualizeazaCheckBoxuriCaracteristici();
+            ProdusSelectat = null;
+        }
+
+        private void AdaugaClient_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(ClientForm.Nume) || string.IsNullOrWhiteSpace(ClientForm.Email) || ClientForm.Buget <= 0)
+            {
+                MessageBox.Show("Completați corect toate câmpurile obligatorii!", "Eroare", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            Clienti.Add(new Client(
+                Guid.NewGuid().ToString(),
+                ClientForm.Nume,
+                ClientForm.Email,
+                ClientForm.Buget)
+            {
+                DataInregistrarii = ClientForm.DataInregistrarii
+            });
+
+            ActualizeazaStatisticiClienti();
+            ClientForm = new Client();
+        }
+
+        private void ModificaClient_Click(object sender, RoutedEventArgs e)
+        {
+            if (ClientSelectat == null)
+            {
+                MessageBox.Show("Selectați un client pentru a-l modifica!", "Eroare", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            int index = Clienti.IndexOf(ClientSelectat);
+            if (index != -1)
+            {
+                Clienti[index] = new Client(
+                    ClientSelectat.IdUnic,
+                    ClientForm.Nume,
+                    ClientForm.Email,
+                    ClientForm.Buget)
+                {
+                    DataInregistrarii = ClientForm.DataInregistrarii
+                };
+                ActualizeazaStatisticiClienti();
+                MessageBox.Show("Client modificat cu succes!", "Succes", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void StergeClient_Click(object sender, RoutedEventArgs e)
+        {
+            if (ClientSelectat == null)
+            {
+                MessageBox.Show("Selectați un client pentru a-l șterge!", "Eroare", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            MessageBoxResult result = MessageBox.Show(
+                $"Sigur doriți să ștergeți clientul '{ClientSelectat.Nume}'?",
+                "Confirmare ștergere",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                Clienti.Remove(ClientSelectat);
+                ActualizeazaStatisticiClienti();
+                ClientForm = new Client();
+            }
+        }
+
+        private void CurataCampuriClient_Click(object sender, RoutedEventArgs e)
+        {
+            ClientForm = new Client();
+            ClientSelectat = null;
+        }
+
+        private void Salveaza_Click(object sender, RoutedEventArgs e)
+        {
+            SalveazaDate();
+            MessageBox.Show("Date salvate cu succes!", "Succes", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void Iesire_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        private void MainWindow_Closing(object sender, CancelEventArgs e)
+        {
+            SalveazaDate();
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected virtual void OnPropertyChanged(string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

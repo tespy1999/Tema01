@@ -16,6 +16,33 @@ namespace MagazinParis
             }
         }
 
+        public void SalveazaClientiInFisier(Clienti clienti)
+        {
+            using (StreamWriter sw = new StreamWriter(numeFisier, false))
+            {
+                for (int i = 0; i < clienti.numarClienti; i++)
+                {
+                    sw.WriteLine(clienti.clienti[i].ConversieLaSir_PentruFisier());
+                }
+            }
+        }
+
+        public void CitesteDinFisierInClienti(Clienti clienti)
+        {
+            if (!File.Exists(numeFisier))
+                return;
+
+            string[] linii = File.ReadAllLines(numeFisier);
+            foreach (string linie in linii)
+            {
+                if (!string.IsNullOrEmpty(linie))
+                {
+                    Client c = new Client(linie);
+                    clienti.AdaugaClient(c);
+                }
+            }
+        }
+
         public void AdaugaClient(Client client)
         {
             using (StreamWriter sw = new StreamWriter(numeFisier, true))
@@ -41,14 +68,14 @@ namespace MagazinParis
             return clienti;
         }
 
-        public Client CautaClient(string numeCautat)
+        public Client CautaClient(string idUnic)
         {
             int nrClienti;
             Client[] clienti = GetClienti(out nrClienti);
 
             for (int i = 0; i < nrClienti; i++)
             {
-                if (clienti[i].Nume == numeCautat)
+                if (clienti[i].IdUnic == idUnic)
                 {
                     return clienti[i];
                 }
@@ -56,7 +83,7 @@ namespace MagazinParis
             return null;
         }
 
-        public void ModificaClient(string numeCautat, Client clientNou)
+        public void ModificaClient(string idUnic, Client clientNou)
         {
             int nrClienti;
             Client[] clienti = GetClienti(out nrClienti);
@@ -65,7 +92,7 @@ namespace MagazinParis
             {
                 for (int i = 0; i < nrClienti; i++)
                 {
-                    if (clienti[i].Nume == numeCautat)
+                    if (clienti[i].IdUnic == idUnic)
                     {
                         sw.WriteLine(clientNou.ConversieLaSir_PentruFisier());
                     }

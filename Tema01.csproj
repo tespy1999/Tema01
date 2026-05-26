@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="AdministrareClienti_FisierText.cs" />
     <Compile Include="AdministrareProduse_FisierText.cs" />
+    <Compile Include="Clienti.cs" />
     <Compile Include="Inventar.cs" />
     <Compile Include="Produs.cs" />
     <Compile Include="Client.cs" />

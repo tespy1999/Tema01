@@ -1,7 +1,7 @@
 <Window x:Class="MagazinParis.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Laborator 9 - Gestiune Magazin Paris" Height="650" Width="1000"
+        Title="Magazin Paris" Height="850" Width="1100"
         WindowStartupLocation="CenterScreen"
         Background="#F0F2F5">
 
@@ -19,99 +19,256 @@
             <Setter Property="Margin" Value="5"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
+
+        <Style x:Key="ErrorTextBlock" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="Red"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+
+        <Style x:Key="ValidatedTextBox" TargetType="TextBox">
+            <Setter Property="Margin" Value="0,0,0,5"/>
+            <Style.Triggers>
+                <Trigger Property="Validation.HasError" Value="True">
+                    <Setter Property="BorderBrush" Value="Red"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                    <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
-    <DockPanel>
+    <DockPanel Margin="0,0,0,29">
         <Menu DockPanel.Dock="Top" Background="White">
             <MenuItem Header="_Fișier">
-                <MenuItem Header="_Salvează" Click="btnSalveaza_Click"/>
+                <MenuItem Header="_Salvează" Click="Salveaza_Click"/>
                 <Separator />
-                <MenuItem Header="_Ieșire" Click="btnIesire_Click"/>
+                <MenuItem Header="_Ieșire" Click="Iesire_Click"/>
             </MenuItem>
         </Menu>
 
-        <Grid Margin="15">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="350"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <TabControl Margin="15">
+            <TabItem Header="Produse">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="350"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-            <!-- Coloana 1: Formular Adăugare/Editare -->
-            <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="15" Margin="0,0,10,0">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <TextBlock Text="Detalii Produs" Style="{StaticResource HeaderTextStyle}"/>
+                    <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="15" Margin="0,0,10,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel DataContext="{Binding ProdusForm}">
+                                <TextBlock Text="Detalii Produs" Style="{StaticResource HeaderTextStyle}"/>
 
-                        <!-- ComboBox pentru Modificare (Cerința 2) -->
-                        <Label Content="Selectează Produs pentru Editare:" FontWeight="Bold"/>
-                        <ComboBox x:Name="cmbSelectieProdus" Margin="0,0,0,15" 
-                                  DisplayMemberPath="Nume"
-                                  SelectionChanged="cmbSelectieProdus_SelectionChanged"
-                                  IsEditable="True" IsTextSearchEnabled="True"/>
+                                <Label Content="Selectează Produs pentru Editare:" FontWeight="Bold"/>
+                                <ComboBox x:Name="cmbSelectieProdus" Margin="0,0,0,15" 
+                                          ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.Produse}"
+                                          SelectedItem="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.ProdusSelectat}"
+                                          DisplayMemberPath="Nume"
+                                          IsEditable="True" IsTextSearchEnabled="True"/>
 
-                        <Label x:Name="lblCod" Content="Cod Unic:"/>
-                        <TextBox x:Name="txtCod" Margin="0,0,0,10"/>
+                                <Label x:Name="lblCod" Content="Cod Unic:"/>
+                                <TextBox x:Name="txtCod" Style="{StaticResource ValidatedTextBox}" Text="{Binding CodUnic, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
+                                <TextBlock Text="{Binding (Validation.Errors)[0].ErrorContent, ElementName=txtCod}" Style="{StaticResource ErrorTextBlock}"/>
 
-                        <Label x:Name="lblNume" Content="Nume Produs:"/>
-                        <TextBox x:Name="txtNume" Margin="0,0,0,10"/>
+                                <Label x:Name="lblNume" Content="Nume Produs:"/>
+                                <TextBox x:Name="txtNume" Style="{StaticResource ValidatedTextBox}" Text="{Binding Nume, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
+                                <TextBlock Text="{Binding (Validation.Errors)[0].ErrorContent, ElementName=txtNume}" Style="{StaticResource ErrorTextBlock}"/>
 
-                        <Label Content="Preț:"/>
-                        <TextBox x:Name="txtPret" Margin="0,0,0,10"/>
+                                <Label Content="Preț:"/>
+                                <TextBox x:Name="txtPret" Style="{StaticResource ValidatedTextBox}" Text="{Binding Pret, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
+                                <TextBlock Text="{Binding (Validation.Errors)[0].ErrorContent, ElementName=txtPret}" Style="{StaticResource ErrorTextBlock}"/>
 
-                        <Label Content="Cantitate:"/>
-                        <TextBox x:Name="txtCantitate" Margin="0,0,0,10"/>
+                                <Label Content="Cantitate:"/>
+                                <TextBox x:Name="txtCantitate" Style="{StaticResource ValidatedTextBox}" Text="{Binding Cantitate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
+                                <TextBlock Text="{Binding (Validation.Errors)[0].ErrorContent, ElementName=txtCantitate}" Style="{StaticResource ErrorTextBlock}"/>
 
-                        <!-- DatePicker (Cerința 1) -->
-                        <Label Content="Data Adăugării:"/>
-                        <DatePicker x:Name="dpDataAdaugarii" Margin="0,0,0,10"/>
+                                <Label Content="Data Adăugării:"/>
+                                <DatePicker x:Name="dpDataAdaugarii" Margin="0,0,0,10" SelectedDate="{Binding DataAdaugarii, Mode=TwoWay}"/>
 
-                        <!-- ListBox pentru Categorie (Cerința 1) -->
-                        <Label Content="Categorie (ListBox):" FontWeight="Bold"/>
-                        <ListBox x:Name="lstCategorii" Height="80" Margin="0,0,0,10" SelectionMode="Single"/>
+                                <Label Content="Categorie:" FontWeight="Bold"/>
+                                <ComboBox x:Name="cmbCategorie" Margin="0,0,0,10"
+                                          ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CategoriiProduse}"
+                                          SelectedItem="{Binding Categorie, Mode=TwoWay}"/>
+                                <TextBlock Text="{Binding (Validation.Errors)[0].ErrorContent, ElementName=cmbCategorie}" Style="{StaticResource ErrorTextBlock}"/>
 
-                        <!-- Caracteristici (CheckBoxes rămân din Lab 8) -->
-                        <Label Content="Caracteristici:" FontWeight="Bold"/>
-                        <WrapPanel x:Name="pnlCaracteristici">
-                            <CheckBox Content="Bio" Tag="Bio"/>
-                            <CheckBox Content="Vegan" Tag="Vegan"/>
-                            <CheckBox Content="Fără Zahăr" Tag="FaraZahar"/>
-                            <CheckBox Content="Fără Gluten" Tag="FaraGluten"/>
-                        </WrapPanel>
+                                <Label Content="Caracteristici:" FontWeight="Bold"/>
+                                <WrapPanel x:Name="pnlCaracteristici">
+                                    <CheckBox Content="Bio" Tag="Bio"/>
+                                    <CheckBox Content="Vegan" Tag="Vegan" Margin="10,0,0,0"/>
+                                    <CheckBox Content="Fără Zahăr" Tag="FaraZahar" Margin="10,0,0,0"/>
+                                    <CheckBox Content="Fără Gluten" Tag="FaraGluten" Margin="10,0,0,0"/>
+                                </WrapPanel>
 
-                        <UniformGrid Columns="2" Margin="0,20,0,0">
-                            <Button Content="Adaugă Nou" Click="btnAdauga_Click" Background="#1A73E8" Foreground="White"/>
-                            <Button x:Name="btnModifica" Content="Modifică" Click="btnModifica_Click" Background="#F4B400" Foreground="White"/>
-                        </UniformGrid>
-                    </StackPanel>
-                </ScrollViewer>
-            </Border>
+                                <UniformGrid Columns="3" Margin="0,20,0,0">
+                                    <Button Content="Adaugă Nou" Click="AdaugaProdus_Click" Background="#1A73E8" Foreground="White"/>
+                                    <Button Content="Modifică" Click="ModificaProdus_Click" Background="#F4B400" Foreground="White"/>
+                                    <Button Content="Șterge" Click="StergeProdus_Click" Background="#EA4335" Foreground="White"/>
+                                </UniformGrid>
+                                <Button Content="Curăță Formular" Click="CurataCampuriProdus_Click" Margin="0,10,0,0"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
 
-            <!-- Coloana 2: Căutare și Tabel -->
-            <Grid Grid.Column="1">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
+                    <Grid Grid.Column="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" Background="White" CornerRadius="8" Padding="10" Margin="0,0,0,10">
-                    <StackPanel Orientation="Horizontal">
-                        <Label Content="Caută după nume:" VerticalAlignment="Center"/>
-                        <TextBox x:Name="txtCautare" Width="200" Margin="10,0,10,0" VerticalAlignment="Center" 
-                                 TextChanged="txtCautare_TextChanged"/>
-                    </StackPanel>
-                </Border>
+                        <Border Grid.Row="0" Background="White" CornerRadius="8" Padding="10" Margin="0,0,0,10">
+                            <StackPanel Orientation="Horizontal">
+                                <Label Content="Caută după nume:" VerticalAlignment="Center"/>
+                                <TextBox x:Name="txtCautare" Width="200" Margin="10,0,10,0" VerticalAlignment="Center" 
+                                         Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.TextCautareProdus, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </Border>
 
-                <DataGrid x:Name="dgProduse" Grid.Row="1" AutoGenerateColumns="False" 
-                          IsReadOnly="True" Background="White" BorderThickness="0">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Cod" Binding="{Binding CodUnic}" Width="60"/>
-                        <DataGridTextColumn Header="Nume" Binding="{Binding Nume}" Width="*"/>
-                        <DataGridTextColumn Header="Preț" Binding="{Binding Pret, StringFormat={}{0:N2} RON}" Width="80"/>
-                        <DataGridTextColumn Header="Categorie" Binding="{Binding Categorie}" Width="100"/>
-                        <DataGridTextColumn Header="Data" Binding="{Binding DataAdaugarii, StringFormat={}{0:dd.MM.yyyy}}" Width="90"/>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </Grid>
-        </Grid>
+                        <Border Grid.Row="1" Background="#1A73E8" CornerRadius="8" Padding="15" Margin="0,0,0,10">
+                            <UniformGrid Columns="4">
+                                <StackPanel>
+                                    <TextBlock Text="Total Produse" Foreground="White" FontSize="12" Opacity="0.9"/>
+                                    <TextBlock Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.TotalProduse}" Foreground="White" FontSize="28" FontWeight="Bold"/>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="Valoare Stoc(RON)" Foreground="White" FontSize="12" Opacity="0.9"/>
+                                    <TextBlock Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.ValoareStoc, StringFormat={}{0:N2} }" Foreground="White" FontSize="28" FontWeight="Bold"/>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="Total Bucăți" Foreground="White" FontSize="12" Opacity="0.9"/>
+                                    <TextBlock Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.TotalBucati}" Foreground="White" FontSize="28" FontWeight="Bold"/>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="Categorii" Foreground="White" FontSize="12" Opacity="0.9"/>
+                                    <TextBlock Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.TotalCategorii}" Foreground="White" FontSize="28" FontWeight="Bold"/>
+                                </StackPanel>
+                            </UniformGrid>
+                        </Border>
+
+                        <DataGrid x:Name="dgProduse" Grid.Row="2" AutoGenerateColumns="False" 
+                                  IsReadOnly="True" Background="White" BorderThickness="0" 
+                                  CanUserSortColumns="True" SelectionMode="Single" 
+                                  ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.ProduseView}"
+                                  SelectedItem="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.ProdusSelectat}"
+                                  AlternatingRowBackground="#F9FAFB">
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Cantitate}" Value="0">
+                                            <Setter Property="Background" Value="#FFECECEC"/>
+                                            <Setter Property="Foreground" Value="#999"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Cantitate}" Value="1">
+                                            <Setter Property="Background" Value="#FFF8E1"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Cantitate}" Value="2">
+                                            <Setter Property="Background" Value="#FFFDE7"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Cod" Binding="{Binding CodUnic}" Width="60" SortMemberPath="CodUnic"/>
+                                <DataGridTextColumn Header="Nume" Binding="{Binding Nume}" Width="*" SortMemberPath="Nume"/>
+                                <DataGridTextColumn Header="Preț" Binding="{Binding Pret, StringFormat={}{0:N2} RON}" Width="80" SortMemberPath="Pret"/>
+                                <DataGridTextColumn Header="Cantitate" Binding="{Binding Cantitate}" Width="70" SortMemberPath="Cantitate"/>
+                                <DataGridTextColumn Header="Categorie" Binding="{Binding Categorie}" Width="100" SortMemberPath="Categorie"/>
+                                <DataGridTextColumn Header="Data" Binding="{Binding DataAdaugarii, StringFormat={}{0:dd.MM.yyyy}}" Width="90" SortMemberPath="DataAdaugarii"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Clienți">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="350"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="15" Margin="0,0,10,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel DataContext="{Binding ClientForm}">
+                                <TextBlock Text="Detalii Client" Style="{StaticResource HeaderTextStyle}"/>
+
+                                <Label Content="Selectează Client pentru Editare:" FontWeight="Bold"/>
+                                <ComboBox x:Name="cmbSelectieClient" Margin="0,0,0,15" 
+                                          ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.Clienti}"
+                                          SelectedItem="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.ClientSelectat}"
+                                          DisplayMemberPath="Nume"
+                                          IsEditable="True" IsTextSearchEnabled="True"/>
+
+                                <Label Content="Nume Client:"/>
+                                <TextBox x:Name="txtNumeClient" Style="{StaticResource ValidatedTextBox}" Text="{Binding Nume, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
+                                <TextBlock Text="{Binding (Validation.Errors)[0].ErrorContent, ElementName=txtNumeClient}" Style="{StaticResource ErrorTextBlock}"/>
+
+                                <Label Content="Email:"/>
+                                <TextBox x:Name="txtEmailClient" Style="{StaticResource ValidatedTextBox}" Text="{Binding Email, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
+                                <TextBlock Text="{Binding (Validation.Errors)[0].ErrorContent, ElementName=txtEmailClient}" Style="{StaticResource ErrorTextBlock}"/>
+
+                                <Label Content="Buget (RON):"/>
+                                <TextBox x:Name="txtBugetClient" Style="{StaticResource ValidatedTextBox}" Text="{Binding Buget, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
+                                <TextBlock Text="{Binding (Validation.Errors)[0].ErrorContent, ElementName=txtBugetClient}" Style="{StaticResource ErrorTextBlock}"/>
+
+                                <Label Content="Data Înregistrării:"/>
+                                <DatePicker x:Name="dpDataInregistrarii" Margin="0,0,0,15" SelectedDate="{Binding DataInregistrarii, Mode=TwoWay}"/>
+
+                                <UniformGrid Columns="3" Margin="0,20,0,0">
+                                    <Button Content="Adaugă Nou" Click="AdaugaClient_Click" Background="#1A73E8" Foreground="White"/>
+                                    <Button Content="Modifică" Click="ModificaClient_Click" Background="#F4B400" Foreground="White"/>
+                                    <Button Content="Șterge" Click="StergeClient_Click" Background="#EA4335" Foreground="White"/>
+                                </UniformGrid>
+                                <Button Content="Curăță Formular" Click="CurataCampuriClient_Click" Margin="0,10,0,0"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+
+                    <Grid Grid.Column="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" Background="White" CornerRadius="8" Padding="10" Margin="0,0,0,10">
+                            <StackPanel Orientation="Horizontal">
+                                <Label Content="Caută după nume:" VerticalAlignment="Center"/>
+                                <TextBox x:Name="txtCautareClient" Width="200" Margin="10,0,10,0" VerticalAlignment="Center" 
+                                         Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.TextCautareClient, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Row="1" Background="#34A853" CornerRadius="8" Padding="15" Margin="0,0,0,10">
+                            <UniformGrid Columns="2">
+                                <StackPanel>
+                                    <TextBlock Text="Total Clienți" Foreground="White" FontSize="12" Opacity="0.9"/>
+                                    <TextBlock Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.TotalClienti}" Foreground="White" FontSize="28" FontWeight="Bold"/>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="Buget Total (RON)" Foreground="White" FontSize="12" Opacity="0.9"/>
+                                    <TextBlock Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.BugetTotal, StringFormat={}{0:N2} RON}" Foreground="White" FontSize="28" FontWeight="Bold"/>
+                                </StackPanel>
+                            </UniformGrid>
+                        </Border>
+
+                        <DataGrid x:Name="dgClienti" Grid.Row="2" AutoGenerateColumns="False" 
+                                  IsReadOnly="True" Background="White" BorderThickness="0" 
+                                  CanUserSortColumns="True" SelectionMode="Single" 
+                                  ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.ClientiView}"
+                                  SelectedItem="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.ClientSelectat}"
+                                  AlternatingRowBackground="#F9FAFB">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Nume" Binding="{Binding Nume}" Width="*" SortMemberPath="Nume"/>
+                                <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="*" SortMemberPath="Email"/>
+                                <DataGridTextColumn Header="Buget" Binding="{Binding Buget, StringFormat={}{0:N2} RON}" Width="100" SortMemberPath="Buget"/>
+                                <DataGridTextColumn Header="Data Înreg." Binding="{Binding DataInregistrarii, StringFormat={}{0:dd.MM.yyyy}}" Width="100" SortMemberPath="DataInregistrarii"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Grid>
+            </TabItem>
+        </TabControl>
     </DockPanel>
 </Window>

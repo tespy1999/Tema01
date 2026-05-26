@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace MagazinParis
 {
@@ -44,6 +44,24 @@ namespace MagazinParis
                 }
             }
             return null;
+        }
+
+        public bool StergeProdus(string codUnic)
+        {
+            for (int i = 0; i < numarProduse; i++)
+            {
+                if (produse[i].CodUnic == codUnic)
+                {
+                    for (int j = i; j < numarProduse - 1; j++)
+                    {
+                        produse[j] = produse[j + 1];
+                    }
+                    numarProduse--;
+                    produse[numarProduse] = null;
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }
